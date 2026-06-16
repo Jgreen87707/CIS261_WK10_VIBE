@@ -124,42 +124,50 @@ class StudentManager:
         return min(averages), max(averages), round(sum(averages) / len(averages), 2)
 
     def save_records(self) -> None:
-        fieldnames = ["name", "student_id", "test1", "test2", "test3"]
-        with open(DATA_FILE, mode="w", newline="", encoding="utf-8") as fp:
-            writer = csv.DictWriter(fp, fieldnames=fieldnames, delimiter="\t")
-            writer.writeheader()
-            for student in self.list_students():
-                writer.writerow(
-                    {
-                        "name": student.name,
-                        "student_id": student.student_id,
-                        "test1": f"{student.test1:.2f}",
-                        "test2": f"{student.test2:.2f}",
-                        "test3": f"{student.test3:.2f}",
-                    }
-                )
+        fieldnames = ["name", "id", "test1", "test2", "test3", "average", "grade"]
+        try:
+            with open(DATA_FILE, mode="w", newline="", encoding="utf-8") as fp:
+                writer = csv.DictWriter(fp, fieldnames=fieldnames, delimiter="|")
+                writer.writeheader()
+                for student in self.list_students():
+                    writer.writerow(
+                        {
+                            "name": student.name,
+                            "id": student.student_id,
+                            "test1": f"{student.test1:.2f}",
+                            "test2": f"{student.test2:.2f}",
+                            "test3": f"{student.test3:.2f}",
+                            "average": f"{student.average_score():.2f}",
+                            "grade": student.letter_grade(),
+                        }
+                    )
+        except OSError as error:
+            raise OSError(f"Unable to save records to '{DATA_FILE}': {error}") from error
 
     def load_records(self) -> None:
         if not os.path.exists(DATA_FILE):
             return
-        with open(DATA_FILE, mode="r", encoding="utf-8", newline="") as fp:
-            reader = csv.DictReader(fp, delimiter="\t")
-            for row in reader:
-                if not row:
-                    continue
-                try:
-                    student_id = row["student_id"].strip()
-                    if not student_id:
+        try:
+            with open(DATA_FILE, mode="r", encoding="utf-8", newline="") as fp:
+                reader = csv.DictReader(fp, delimiter="|")
+                for row in reader:
+                    if not row:
                         continue
-                    self.records[student_id.lower()] = StudentRecord(
-                        name=row["name"],
-                        student_id=student_id,
-                        test1=float(row["test1"]),
-                        test2=float(row["test2"]),
-                        test3=float(row["test3"]),
-                    )
-                except (ValueError, KeyError):
-                    continue
+                    try:
+                        student_id = row.get("id", "").strip()
+                        if not student_id:
+                            continue
+                        self.records[student_id.lower()] = StudentRecord(
+                            name=row.get("name", ""),
+                            student_id=student_id,
+                            test1=float(row.get("test1", "0") or 0),
+                            test2=float(row.get("test2", "0") or 0),
+                            test3=float(row.get("test3", "0") or 0),
+                        )
+                    except (ValueError, KeyError):
+                        continue
+        except OSError as error:
+            raise OSError(f"Unable to read records from '{DATA_FILE}': {error}") from error
 
 
 def get_float(prompt: str) -> float:

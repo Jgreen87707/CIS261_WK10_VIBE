@@ -1,0 +1,4 @@
+name|id|test1|test2|test3|average|grade
+Alice Johnson|$1001|95.00|88.00|92.00|91.67|A
+Bob Smith|$1002|78.00|92.00|75.00|81.67|B
+Jamie Smith|$1003|65.00|98.00|75.00|79.33|C
